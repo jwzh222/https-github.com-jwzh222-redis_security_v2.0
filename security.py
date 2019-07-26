@@ -96,8 +96,8 @@ class Security:
         # For single data store, allow store({})
         if type(sec_datas)==dict :
             try:
-                new_sec_datas = cls._pre_processing([sec_datas])[0]
-                dumps = cls._serialize(new_sec_datas)
+                sec_datas = cls._pre_processing([sec_datas])[0]
+                dumps = cls._serialize(sec_datas)
                 cls.r.set(sec_datas['ssm_id'], dumps)
                 cls.r.sadd(cls.stored_ssm_id, sec_datas['ssm_id'])
             except Exception as e:
@@ -111,8 +111,8 @@ class Security:
 
         if len(sec_datas)<1000000: # IF the data not too big, use one pipeline to store in redis
             if protection:
-                new_sec_datas = cls._pre_processing(sec_datas)
-            return cls._small_store(new_sec_datas)
+                sec_datas = cls._pre_processing(sec_datas)
+            return cls._small_store(sec_datas)
 
         else:# If the data is big, use multi process to store in redis
             return cls._multiprocess_store(sec_datas)

@@ -1,11 +1,45 @@
 
 import security as sec
 import test_engine as zj_test_engine
+from datetime import datetime
 
-_AMOUNT = 50000
+_AMOUNT = 500000
 _COLUMNS = 200
 
-def single_store():
+def test_case():
+    # In the morning, Li Lei run some linear regression analysis scripts for the 500K number of securities, and generate 200 attributes for each security.
+    # the data was like: [{'ssm_id':'778286R7', 'duration':7.42, 'oas':8.23, 'pimco':1.33},{'ssm_id':'SD332X6R7', 'c1':7.42, 'b2':8.23}]
+    source_data = pandas_generate_big_data()
+
+    #Test case 1:
+    #In the moring, Li Lei want to store all these 500K*200 data into redis
+    #because all the 200 attributes have new value, we don't need to protect old data,so use protection=False can be faster
+    time1 = datetime.now()
+    print 'store begins: ',time1.time()
+    sec.Security.store(source_data, protection=False)
+    time2 = datetime.now()
+    print 'store finished, use: ',time2-time1
+
+    #Test case 2:
+    #Li lei want to update one attribute for one security, and dont want to affect other attributes
+    sec_data1 = {'ssm_id':'single_test1', 'duration':1.23}
+    print 'before update :',sec.Security.gets('single_test1')
+    #you don't want to lose other attributes in this case, don't use protection=False
+    sec.Security.store(sec_data1)
+    print 'after update :',sec.Security.gets('single_test1')
+
+    #Test case 3:
+    #get a list of data from redis
+    all_ids = sec.Security.getall()
+    time1 = datetime.now()
+    print 'gets begins: ',time1.time()
+    sec_datas = sec.Security.gets(all_ids)
+    #print sec_datas[0]
+    time2 = datetime.now()
+    print 'gets finished, use: ',time2-time1
+
+
+def test_update():
     """Store one sec data into redis, and updata some attributes, check these attributes
 
     for the same sec_id, use sec_obj.store() twice:
@@ -41,33 +75,6 @@ def single_store():
     print secs
 
 
-def test_case():
-
-    # In the morning, Li Lei run some linear regression analysis scripts for the 500K number of securities, and generate 200 attributes for each security.
-    # the data was like: [{'ssm_id':'778286R7', 'duration':7.42, 'oas':8.23, 'pimco':1.33},{'ssm_id':'SD332X6R7', 'c1':7.42, 'b2':8.23}]
-    source_data = pandas_generate_big_data()
-
-    # Li Lei want to store all these 500K*200 data into redis
-    sec.Security.store(source_data)
-
-
-    # Li lei want to update one attribute for one security, and dont want to affect other attributes
-    sec_data1 = {'ssm_id':'single_test1', 'duration':1.23}
-    print 'before update :',sec.Security.get('single_test1')
-    sec.Security.store(sec_data1)
-    print 'after update :',sec.Security.get('single_test1')
-
-
-def very_long_attribute():
-    sec_pd = zj_test_engine.gen_sec_data_frame(1, 20000)# generate one sec data with 20000 attributes
-    source_data = zj_test_engine.gen_source_data(sec_pd)
-    print 'this data have ',len(source_data[0]),' attributes!'
-    sec.Security.store(source_data[0])
-    sec0 = sec.Security.gets(source_data[0]['ssm_id'])
-    print 'check from redis returns data with length: ',len(sec0[0])
-
-
-
 def pandas_generate_big_data():
     # get source data
     print '-------------------------------------------------------------------'
@@ -81,22 +88,7 @@ def pandas_generate_big_data():
         ' with ',_COLUMNS,' attributes!'
     return source_data
 
-
-def show_running_time(func):
-    # a decorate to count how long a function executed
-    import datetime
-    def warp(*args):
-        start = datetime.datetime.now()
-        print 'fuction ',func.__name__, ' starts at ',start
-        func(*args)
-        end = datetime.datetime.now()
-        print 'fuction ',func.__name__, ' ends at ',end
-        print 'function running ',(end-start).seconds,' seconds'
-    return warp
-
-
-@show_running_time
-def performance_test(source_data):
+def batch_store_test(source_data):
 
     print '-------------------------------------------------------------------'
     print '-------------------------------------------------------------------'
@@ -118,24 +110,14 @@ def performance_test(source_data):
     after = sec.Security.gets(check_point)[0]['ssm_id'], sec.Security.gets(check_point)[0]['a1'], sec.Security.gets(check_point)[0]['a3']
     print 'after update, check point is: ',after
 
-    all_ids = sec.Security.getall()
-    datas = sec.Security.gets(all_ids)
-
-
-
-
 
 if __name__ == '__main__':
-
     try:
-        #single_store()
-        #normal_store_get()
-
-        #very_long_attribute()
-
-        # get source data from pandas
-        source_data = pandas_generate_big_data()
-        performance_test(source_data)
+        test_case()
+        #test_update()
+        #batch_store_test()
 
     except Exception as e:
         print e
+
+
