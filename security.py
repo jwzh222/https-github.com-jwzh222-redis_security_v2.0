@@ -68,7 +68,7 @@ class Security:
     def _pre_processing(cls, sec_datas):
         ids = [sec_data['ssm_id'] for sec_data in sec_datas]
         olds = cls.gets(ids)
-        for i in range(len(sec_datas)):
+        for i in xrange(len(sec_datas)):
             if olds[i]:
                 olds[i].update(sec_datas[i])
                 sec_datas[i] = olds[i]
@@ -83,8 +83,8 @@ class Security:
             [{'ssm_id':'9128286R6', 'a1':7.42, 'b2':8.23},{'ssm_id':'1128286R6', 'c1':7.42, 'b2':8.23}]
 
             protection:
-             protection=False means don't need to protect old data,and don't need to do pre-processing
-             set protection=False to make batch updation and creation fast
+             protection=False means don't need to protect old data, so will save time in pre-processing
+             set protection=False to make batch store fast
              default is True
 
         Returns:
