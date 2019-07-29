@@ -13,20 +13,25 @@ def test_case():
 
     #Test case 1:
     #In the moring, Li Lei want to store all these 500K*200 data into redis
-    #because all the 200 attributes have new value, we don't need to protect old data,so use protection=False can be faster
     time1 = datetime.now()
     print 'store begins: ',time1.time()
     sec.Security.store(source_data, protection=False)
+    #protection=True means pre-processing will impliemented to protect old data
+    #protection=False means data will be stored into redis without a pre-processing,
+    #because all the 200 attributes have new value, we don't need to protect old data in this case ,so use protection=False can be faster
     time2 = datetime.now()
     print 'store finished, use: ',time2-time1
 
     #Test case 2:
     #Li lei want to update one attribute for one security, and dont want to affect other attributes
-    sec_data1 = {'ssm_id':'singleV2_test1', 'duration':1.23}
-    print 'before update :',sec.Security.gets('singleV2_test1')
+    checkpoint_ssm_id = 'test_V2_ssm_id9'
+    sec_data1 = {'ssm_id':checkpoint_ssm_id, 'duration':1.23, 'a1':9.99}
+    print 'checkpoint before update :',sec.Security.gets(checkpoint_ssm_id)
     #you don't want to lose other attributes in this case, don't use protection=False
     sec.Security.store(sec_data1)
-    print 'after update :',sec.Security.gets('singleV2_test1')
+    #sec.Security.store(sec_data1,protection=True)  is also OK
+    #sec.Security.store(sec_data1,protection=False) is WRONG, this will overwrite other attributes
+    print 'checkpoint after update :',sec.Security.gets(checkpoint_ssm_id)
 
     #Test case 3:
     #get a list of data from redis
@@ -73,7 +78,6 @@ def test_update():
     secs = sec.Security.gets(['V2batch8286R7', 'V2batch2X6R7', 'notexsitid'])
     print secs
 
-
 def pandas_generate_big_data():
     # get source data
     print '-------------------------------------------------------------------'
@@ -87,28 +91,6 @@ def pandas_generate_big_data():
         ' with ',_COLUMNS,' attributes!'
     return source_data
 
-def batch_store_test(source_data):
-
-    print '-------------------------------------------------------------------'
-    print '-------------------------------------------------------------------'
-    print '-------------------------------------------------------------------'
-    print '!!!!!!!!!!!performance test starts now!!!!!!!!!!!!!!!!!!!'
-
-    check_point = source_data[3]['ssm_id']
-    try:
-        before = sec.Security.gets(check_point)[0]['ssm_id'], sec.Security.gets(check_point)[0]['a1'], sec.Security.gets(check_point)[0]['a3']
-    except:
-        before = None
-    print 'before update, check point is: ',before
-
-    print 'the check point in source data is: ',(source_data[3]['ssm_id'], source_data[3]['a1'], source_data[3]['a3'])
-
-    sec.Security.store(source_data)
-    print 'data update finish!'
-
-    after = sec.Security.gets(check_point)[0]['ssm_id'], sec.Security.gets(check_point)[0]['a1'], sec.Security.gets(check_point)[0]['a3']
-    print 'after update, check point is: ',after
-
 def deletes():
     all_ids = sec.Security.getall()
     sec.Security.deletes(all_ids)
@@ -118,8 +100,6 @@ if __name__ == '__main__':
     try:
         test_case()
         #test_update()
-        #source_data = pandas_generate_big_data()
-        #batch_store_test(source_data)
         #deletes()
 
     except Exception as e:
