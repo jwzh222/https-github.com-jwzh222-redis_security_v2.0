@@ -86,8 +86,9 @@ def pandas_generate_big_data():
     print 'please wait!!!!'
     sec_pd = zj_test_engine.gen_sec_data_frame(_AMOUNT, _COLUMNS)
     print 'the test data: ',sec_pd
+    print 'transforming source data, please wait...'
     source_data = zj_test_engine.gen_source_data(sec_pd) # returns a list of dict
-    print 'pandas has generated ',len(source_data),' number of source data',\
+    print 'test engine has generated ',len(source_data),' number of source data',\
         ' with ',_COLUMNS,' attributes!'
     return source_data
 
