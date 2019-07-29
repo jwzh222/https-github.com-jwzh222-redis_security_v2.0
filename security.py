@@ -51,7 +51,7 @@ class Security:
     #r = StrictRedisCluster(startup_nodes=my_redis)
 
     # Record all ssm_id of data stored in redis
-    stored_ssm_id = 'Security_stored_ssm_id'
+    stored_ssm_id = 'Security_V2_stored_ssm_id'
 
 
     @staticmethod
@@ -238,6 +238,13 @@ class Security:
         for ids in iter(failed_ids_queue.get, None):
             failed_ids.append(ids)
         return failed_ids
+
+    @classmethod
+    def deletes(cls, ids):
+        result = cls.r.delete(*ids)
+        print result,' datas was deleted!'
+
+
 
     @classmethod
     def _small_store(cls, sec_datas):

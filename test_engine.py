@@ -20,7 +20,7 @@ def gen_sec_data_frame(amount, columns):
     # return a pandas data frame
     sec_data = np.random.randn(amount,columns)
     fields = ['a'+str(i) for i in xrange(columns)]
-    ssm_ids = ['test_ssm_id'+str(i) for i in xrange(amount)]
+    ssm_ids = ['test_V2_ssm_id'+str(i) for i in xrange(amount)]
     ssm_ids_np = pd.Series(ssm_ids)
     sec_data_pd = pd.DataFrame(sec_data, index=ssm_ids_np, columns=fields)
     sec_data_pd['ssm_id']=sec_data_pd.index#this can make to_dict() easy
