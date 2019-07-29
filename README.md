@@ -27,4 +27,17 @@ class Security:
  3.python test.py
 
 
+# example
+"""
+data = [{'ssm_id':'V2778286R7', 'duration':7.42, 'oas':8.23, 'pimco':1.33},{'ssm_id':'SD332X6R7', 'c1':7.42, 'b2':8.23}]
+(support flexible attributes)
+Security.store(data,protection=True) 
+in order to avoid overwriting old attributes, a pre-processing should be implemented before redis set.
+protection=True means the old attributes should be protected, and default value is True.
+however when you don't need old data, set protection=False will save a lot time.
+
+
+Check in test.py for more details to use
+
+"""
 
