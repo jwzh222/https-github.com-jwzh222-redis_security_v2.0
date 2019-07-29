@@ -10,6 +10,8 @@ def test_case():
     # In the morning, Li Lei run some linear regression analysis scripts for the 500K number of securities, and generate 200 attributes for each security.
     # the data was like: [{'ssm_id':'V2778286R7', 'duration':7.42, 'oas':8.23, 'pimco':1.33},{'ssm_id':'SD332X6R7', 'c1':7.42, 'b2':8.23}]
     source_data = pandas_generate_big_data()
+    print 'starts testing Security API!!!'
+    print '-----------------------------------------------------------'
 
     #Test case 1:
     #In the moring, Li Lei want to store all these 500K*200 data into redis
@@ -25,10 +27,11 @@ def test_case():
     #Test case 2:
     #Li lei want to update one attribute for one security, and dont want to affect other attributes
     checkpoint_ssm_id = 'test_V2_ssm_id9'
-    sec_data1 = {'ssm_id':checkpoint_ssm_id, 'duration':1.23, 'a1':9.99}
+    sec_data1 = {'ssm_id':checkpoint_ssm_id, 'a1':9.99, 'z99':3.3}
     print 'checkpoint before update :',sec.Security.gets(checkpoint_ssm_id)
     #you don't want to lose other attributes in this case, don't use protection=False
     sec.Security.store(sec_data1)
+    print '-----------------------------------------------------------'
     #sec.Security.store(sec_data1,protection=True)  is also OK
     #sec.Security.store(sec_data1,protection=False) is WRONG, this will overwrite other attributes
     print 'checkpoint after update :',sec.Security.gets(checkpoint_ssm_id)
@@ -100,8 +103,8 @@ def deletes():
 if __name__ == '__main__':
     try:
         test_case()
-        #test_update()
-        #deletes()
+        test_update()
+        deletes()
 
     except Exception as e:
         print e

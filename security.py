@@ -36,13 +36,14 @@ logging.basicConfig(filename='security.log', level=logging.DEBUG, format=LOG_FOR
 class Security:
     """Store and get data from redis
 
-    Api will be exposed to users: store() gets() getall()
+    Api will be exposed to users: store() gets() getall() deletes()
 
     How to use:
         Security.store({'ssm_id':"test1", 'a':9.32})
         Security.store([{'ssm_id':"test1", 'a':9.32},{'ssm_id':"test2", 'b':4.32, 'jwzh':5.11}])
         Security.gets(['test1','test2'])
         Security.getall()
+        Security.deletes(['id1','id2'])
 
     """
 
@@ -93,7 +94,6 @@ class Security:
 
         """
         failed_ids = []
-
         # For single data store, allow store({})
         if type(sec_datas)==dict :
             try:
@@ -110,16 +110,13 @@ class Security:
         if len(sec_datas)==0:
             return None # Can't return a empty list, which means all data stored successfully
 
-        if len(sec_datas)<1000000: # IF the data not too big, use one pipeline to store in redis
+        if len(sec_datas)<10000: # IF the data not too big, use one pipeline to store in redis
             if protection:
                 sec_datas = cls._pre_processing(sec_datas)
             return cls._small_store(sec_datas)
 
         else:# If the data is big, use multi process to store in redis
             return cls._multiprocess_store(sec_datas)
-
-        logging.debug('all thread pipe finish!')
-        return failed_ids
 
     @classmethod
     def gets(cls, ssm_ids):
@@ -170,6 +167,48 @@ class Security:
             return False
 
     @classmethod
+    def _small_store(cls, sec_datas):
+        """store datas with one single pipeline
+
+        Input:
+            sec_datas : must be a list
+            [{'ssm_id':'9128286R6', 'a1':7.42, 'b2':8.23},{'ssm_id':'1128286R6', 'c1':7.42, 'b2':8.23}]
+        Returns:
+            a list of failed ids
+
+            TODO exception processing according to real product environment
+        """
+        failed_ids = []
+        succeed_ids = []
+        pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
+        for sec_data in sec_datas:
+            dumps = cls._serialize(sec_data)
+            pipe.set(sec_data['ssm_id'], dumps)
+        try:
+            result = pipe.execute()
+            for v in zip(result,sec_datas):
+                if v[0]==True:# if success, records all succeed ssm ids
+                    succeed_ids.append(v[1]['ssm_id'])
+
+                else: # if set failed
+                    failed_ids.append(v[1]['ssm_id'])
+
+            # records all succeed ssm id
+            try:
+                cls.r.sadd(cls.stored_ssm_id,*succeed_ids)
+            except Exception as e:
+                logging.error('small store sadd error: ')
+                logging.error(e)
+
+            return failed_ids
+
+        except Exception as e:
+            logging.error('small store error: ')
+            logging.error(e)
+            failed_ids = [sec_data['ssm_id'] for sec_data in sec_datas]
+            return failed_ids
+
+    @classmethod
     def _multiprocess_store(cls, sec_datas):
         """
         Use multi process to store a big amount of data
@@ -183,15 +222,13 @@ class Security:
         """
 
         def pipeline_store(i,q):
-            #print 'inter chile process'
-            #print os.getpid(),' pipeline starts execute'
-            #r = redis.StrictRedis(decode_responses=True, **my_redis)
             pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
             slices = len(sec_datas)/groups
             data_slice = sec_datas[i*slices:(i+1)*slices]# split the datas into groups
             succeed_ids = []
             for sec_data in data_slice:
-                pipe.hmset(sec_data['ssm_id'], sec_data)
+                dumps = cls._serialize(sec_data)
+                pipe.set(sec_data['ssm_id'], dumps)
             try:
                 result = pipe.execute()
                 #print 'process: ',os.getpid(),' pipeline returns ',result[:10]
@@ -200,13 +237,6 @@ class Security:
                         succeed_ids.append(v[1]['ssm_id'])
                     else:# if hmset failed
                         q.put(v[1]['ssm_id'])
-                        # try hmset again to get error log
-                        try:
-                            cls.r.hmset(v[1]['ssm_id'], v[1])
-                        except Exception as e:
-                            logging.error('hmset error!!!')
-                            logging.error(v[1]['ssm_id'])
-                            logging.error(e)
 
                 # records all succeed ssm id
                 try:
@@ -244,51 +274,4 @@ class Security:
     def deletes(cls, ids):
         result = cls.r.delete(*ids)
         print result,' datas was deleted!'
-
-
-
-    @classmethod
-    def _small_store(cls, sec_datas):
-        """store datas with one single pipeline
-
-        This function will not expose to uses!
-
-        Input:
-            sec_datas : must be a list
-            [{'ssm_id':'9128286R6', 'a1':7.42, 'b2':8.23},{'ssm_id':'1128286R6', 'c1':7.42, 'b2':8.23}]
-        Returns:
-            a list of failed ids
-
-            TODO exception processing according to real product environment
-        """
-        #r = redis.StrictRedis(decode_responses=True, **my_redis)
-        failed_ids = []
-        succeed_ids = []
-        pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
-        for sec_data in sec_datas:
-            dumps = cls._serialize(sec_data)
-            pipe.set(sec_data['ssm_id'], dumps)
-        try:
-            result = pipe.execute()
-            for v in zip(result,sec_datas):
-                if v[0]==True:# if success, records all succeed ssm ids
-                    succeed_ids.append(v[1]['ssm_id'])
-
-                else: # if set failed
-                    failed_ids.append(v[1]['ssm_id'])
-
-            # records all succeed ssm id
-            try:
-                cls.r.sadd(cls.stored_ssm_id,*succeed_ids)
-            except Exception as e:
-                logging.error('small store sadd error: ')
-                logging.error(e)
-
-            return failed_ids
-
-        except Exception as e:
-            logging.error('small store error: ')
-            logging.error(e)
-            failed_ids = [sec_data['ssm_id'] for sec_data in sec_datas]
-            return failed_ids
 
