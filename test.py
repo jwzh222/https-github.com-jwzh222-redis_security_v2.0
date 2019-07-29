@@ -41,7 +41,7 @@ def test_case():
     all_ids = sec.Security.getall()
     time1 = datetime.now()
     print 'gets begins: ',time1.time()
-    sec_datas = sec.Security.gets(all_ids)
+    sec_datas = sec.Security.gets(all_ids[:50000])
     #print sec_datas[0]
     time2 = datetime.now()
     print 'gets finished, use: ',time2-time1
@@ -103,8 +103,8 @@ def deletes():
 if __name__ == '__main__':
     try:
         test_case()
-        test_update()
-        deletes()
+        #test_update()
+        #deletes()
 
     except Exception as e:
         print e
