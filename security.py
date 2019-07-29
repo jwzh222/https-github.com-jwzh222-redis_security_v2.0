@@ -9,7 +9,6 @@ from rediscluster import StrictRedisCluster
 import logging
 from multiprocessing import Process, Queue
 import msgpack
-from datetime import datetime
 
 # Modify this to get best perfomance when it comes to big data store and update, according to your machine
 # multiply the number of socket, cores and threads. i.e.for devpmapp3 the number should be 4*1*1=4
@@ -25,8 +24,8 @@ STARTUP_NODES = [{"host":"10.155.44.115","port":"6380"},
                  {"host":"10.155.44.114","port":"6381"},
                  ]
 
-#my_redis = STARTUP_NODES
-my_redis = REDIS_ZJ
+my_redis = STARTUP_NODES
+#my_redis = REDIS_ZJ
 
 # Logging configuration
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -47,8 +46,8 @@ class Security:
 
     """
 
-    r = StrictRedis(**my_redis)
-    #r = StrictRedisCluster(startup_nodes=my_redis)
+    #r = StrictRedis(**my_redis)
+    r = StrictRedisCluster(startup_nodes=my_redis)
 
     # Record all ssm_id of data stored in redis
     stored_ssm_id = 'Security_V2_stored_ssm_id'
@@ -57,10 +56,12 @@ class Security:
     @staticmethod
     def _serialize(obj_dict):
         return msgpack.packb(obj_dict)
+        #return jsonpickle.dumps(obj_dict)
 
     @staticmethod
     def _deserialize(dumps):
         return msgpack.unpackb(dumps)
+        #return jsonpickle.loads(dumps)
 
     @classmethod
     def _pre_processing(cls, sec_datas):

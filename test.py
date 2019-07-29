@@ -3,7 +3,7 @@ import security as sec
 import test_engine as zj_test_engine
 from datetime import datetime
 
-_AMOUNT = 5000
+_AMOUNT = 50000
 _COLUMNS = 200
 
 def test_case():
@@ -37,7 +37,6 @@ def test_case():
     #print sec_datas[0]
     time2 = datetime.now()
     print 'gets finished, use: ',time2-time1
-
 
 def test_update():
     """Store one sec data into redis, and updata some attributes, check these attributes
@@ -118,10 +117,10 @@ def deletes():
 if __name__ == '__main__':
     try:
         test_case()
-        test_update()
+        #test_update()
         #source_data = pandas_generate_big_data()
         #batch_store_test(source_data)
-        deletes()
+        #deletes()
 
     except Exception as e:
         print e
