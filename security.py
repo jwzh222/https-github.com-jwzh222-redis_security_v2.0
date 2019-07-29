@@ -116,6 +116,8 @@ class Security:
             return cls._small_store(sec_datas)
 
         else:# If the data is big, use multi process to store in redis
+            if protection:
+                sec_datas = cls._pre_processing(sec_datas)
             return cls._multiprocess_store(sec_datas)
 
     @classmethod
