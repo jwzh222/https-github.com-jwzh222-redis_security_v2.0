@@ -17,6 +17,7 @@ def test_case():
     #In the moring, Li Lei want to store all these 500K*200 data into redis
     time1 = datetime.now()
     print 'store begins: ',time1.time()
+    #sec.Security.store(source_data)
     sec.Security.store(source_data, protection=False)
     #protection=True means pre-processing will impliemented to protect old data
     #protection=False means data will be stored into redis without a pre-processing,

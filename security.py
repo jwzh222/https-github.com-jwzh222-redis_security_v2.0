@@ -68,11 +68,14 @@ class Security:
     def _pre_processing(cls, sec_datas):
         ids = [sec_data['ssm_id'] for sec_data in sec_datas]
         olds = cls.gets(ids)
-        for i in xrange(len(sec_datas)):
-            if olds[i]:
-                olds[i].update(sec_datas[i])
-                sec_datas[i] = olds[i]
-        return sec_datas
+        after_processing = []
+        for new_data,old_data in zip(sec_datas,olds):
+            if old_data:# if not None
+                old_data.update(new_data)
+                after_processing.append(old_data)
+            else:
+                after_processing.append(new_data)
+        return after_processing
 
     @classmethod
     def store(cls, sec_datas, protection=True):
