@@ -3,7 +3,7 @@ import security as sec
 import test_engine as zj_test_engine
 from datetime import datetime
 
-_AMOUNT = 50000
+_AMOUNT = 5000
 _COLUMNS = 200
 
 def test_case():
@@ -17,8 +17,8 @@ def test_case():
     #In the moring, Li Lei want to store all these 500K*200 data into redis
     time1 = datetime.now()
     print 'store begins: ',time1.time()
-    #sec.Security.store(source_data)
-    sec.Security.store(source_data, protection=False)
+    #sec.Security.store(source_data, protection=False)
+    sec.Security.store(source_data)
     #protection=True means pre-processing will impliemented to protect old data
     #protection=False means data will be stored into redis without a pre-processing,
     #because all the 200 attributes have new value, we don't need to protect old data in this case ,so use protection=False can be faster

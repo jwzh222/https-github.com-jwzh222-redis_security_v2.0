@@ -113,7 +113,7 @@ class Security:
         if len(sec_datas)==0:
             return None # Can't return a empty list, which means all data stored successfully
 
-        if len(sec_datas)<10000: # IF the data not too big, use one pipeline to store in redis
+        if len(sec_datas)<1000: # IF the data not too big, use one pipeline to store in redis
             if protection:
                 sec_datas = cls._pre_processing(sec_datas)
             return cls._small_store(sec_datas)
@@ -121,6 +121,29 @@ class Security:
         else:# If the data is big, use multi process to store in redis
             if protection:
                 sec_datas = cls._pre_processing(sec_datas)
+            import pdb
+            pdb.set_trace()
+            import psutil
+            import os
+            info = psutil.virtual_memory()
+            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+            print u'total mem:',info.total
+            print u'percent:',info.percent
+            print u'cpu number:',psutil.cpu_count()
+
+            import gc
+            collected = gc.collect()
+            print 'garbage collected: ',collected
+
+            import psutil
+            import os
+            info = psutil.virtual_memory()
+            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+            print u'total mem:',info.total
+            print u'percent:',info.percent
+            print u'cpu number:',psutil.cpu_count()
+
+            print len(sec_datas)
             return cls._multiprocess_store(sec_datas)
 
     @classmethod
@@ -227,6 +250,15 @@ class Security:
         """
 
         def pipeline_store(i,q):
+
+            import psutil
+            import os
+            info = psutil.virtual_memory()
+            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+            print u'total mem:',info.total
+            print u'percent:',info.percent
+            print u'cpu number:',psutil.cpu_count()
+
             pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
             slices = len(sec_datas)/groups
             data_slice = sec_datas[i*slices:(i+1)*slices]# split the datas into groups
