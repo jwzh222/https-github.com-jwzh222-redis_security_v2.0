@@ -3,7 +3,7 @@ import security as sec
 import test_engine as zj_test_engine
 from datetime import datetime
 
-_AMOUNT = 500000
+_AMOUNT = 5000
 _COLUMNS = 200
 
 def test_case():

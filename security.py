@@ -121,6 +121,7 @@ class Security:
         else:# If the data is big, use multi process to store in redis
             if protection:
                 sec_datas = cls._pre_processing(sec_datas)
+            import gc
             collected = gc.collect()
             print 'garbage collected: ',collected
 
