@@ -24,8 +24,8 @@ STARTUP_NODES = [{"host":"10.155.44.115","port":"6380"},
                  {"host":"10.155.44.114","port":"6381"},
                  ]
 
-my_redis = STARTUP_NODES
-#my_redis = REDIS_ZJ
+#my_redis = STARTUP_NODES
+my_redis = REDIS_ZJ
 
 # Logging configuration
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -47,8 +47,8 @@ class Security:
 
     """
 
-    #r = StrictRedis(**my_redis)
-    r = StrictRedisCluster(startup_nodes=my_redis)
+    r = StrictRedis(**my_redis)
+    #r = StrictRedisCluster(startup_nodes=my_redis)
 
     # Record all ssm_id of data stored in redis
     stored_ssm_id = 'Security_V2_stored_ssm_id'
