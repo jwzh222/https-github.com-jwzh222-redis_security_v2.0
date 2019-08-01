@@ -67,7 +67,28 @@ class Security:
     @classmethod
     def _pre_processing(cls, sec_datas):
         ids = [sec_data['ssm_id'] for sec_data in sec_datas]
+        import psutil
+        import os
+        info = psutil.virtual_memory()
+        print 'in pre-processing, before gets'
+        print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+        print u'total mem:',info.total
+        print u'percent:',info.percent
+        print u'cpu number:',psutil.cpu_count()
+
         olds = cls.gets(ids)
+
+        info = psutil.virtual_memory()
+        print 'after gets'
+        print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+        print u'total mem:',info.total
+        print u'percent:',info.percent
+        print u'cpu number:',psutil.cpu_count()
+
+        import gc
+        collected = gc.collect()
+        print 'in pre-processing garbage collected: ',collected
+
         after_processing = []
         for new_data,old_data in zip(sec_datas,olds):
             if old_data:# if not None
@@ -75,6 +96,19 @@ class Security:
                 after_processing.append(old_data)
             else:
                 after_processing.append(new_data)
+
+        import psutil
+        import os
+        print 'in pre-processing, after old process'
+        print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+        print u'total mem:',info.total
+        print u'percent:',info.percent
+        print u'cpu number:',psutil.cpu_count()
+
+        import gc
+        collected = gc.collect()
+        print 'in pre-processing garbage collected: ',collected
+
         return after_processing
 
     @classmethod
@@ -121,8 +155,7 @@ class Security:
         else:# If the data is big, use multi process to store in redis
             if protection:
                 sec_datas = cls._pre_processing(sec_datas)
-            import pdb
-            pdb.set_trace()
+            print 'out pre-processing'
             import psutil
             import os
             info = psutil.virtual_memory()
