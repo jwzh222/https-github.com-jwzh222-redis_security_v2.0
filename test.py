@@ -3,7 +3,7 @@ import security as sec
 import test_engine as zj_test_engine
 from datetime import datetime
 
-_AMOUNT = 5000
+_AMOUNT = 50000
 _COLUMNS = 200
 
 def test_case():
@@ -17,8 +17,8 @@ def test_case():
     #In the moring, Li Lei want to store all these 500K*200 data into redis
     time1 = datetime.now()
     print 'store begins: ',time1.time()
-    #sec.Security.store(source_data, protection=False)
-    sec.Security.store(source_data)
+    sec.Security.store(source_data, protection=False)
+    #sec.Security.store(source_data)
     #protection=True means pre-processing will impliemented to protect old data
     #protection=False means data will be stored into redis without a pre-processing,
     #because all the 200 attributes have new value, we don't need to protect old data in this case ,so use protection=False can be faster
@@ -29,20 +29,20 @@ def test_case():
     #Li lei want to update one attribute for one security, and dont want to affect other attributes
     checkpoint_ssm_id = 'test_V2_ssm_id9'
     sec_data1 = {'ssm_id':checkpoint_ssm_id, 'a1':9.99, 'z99':3.3}
-    print 'checkpoint before update :',sec.Security.gets(checkpoint_ssm_id)
+    #print 'checkpoint before update :',sec.Security.gets(checkpoint_ssm_id)
     #you don't want to lose other attributes in this case, don't use protection=False
     sec.Security.store(sec_data1)
     print '-----------------------------------------------------------'
     #sec.Security.store(sec_data1,protection=True)  is also OK
     #sec.Security.store(sec_data1,protection=False) is WRONG, this will overwrite other attributes
-    print 'checkpoint after update :',sec.Security.gets(checkpoint_ssm_id)
+    #print 'checkpoint after update :',sec.Security.gets(checkpoint_ssm_id)
 
     #Test case 3:
     #get a list of data from redis
     all_ids = sec.Security.getall()
     time1 = datetime.now()
     print 'gets begins: ',time1.time()
-    sec_datas = sec.Security.gets(all_ids[:50000])
+    #sec_datas = sec.Security.gets(all_ids[:50000])
     #print sec_datas[0]
     time2 = datetime.now()
     print 'gets finished, use: ',time2-time1
@@ -91,10 +91,11 @@ def pandas_generate_big_data():
     sec_pd = zj_test_engine.gen_sec_data_frame(_AMOUNT, _COLUMNS)
     print 'the test data: ',sec_pd
     print 'transforming source data, please wait...'
-    source_data = zj_test_engine.gen_source_data(sec_pd) # returns a list of dict
-    print 'test engine has generated ',len(source_data),' number of source data',\
+    source_datas = zj_test_engine.gen_source_data(sec_pd) # returns a list of dict
+    del sec_pd
+    print 'test engine has generated ',len(source_datas),' number of source data',\
         ' with ',_COLUMNS,' attributes!'
-    return source_data
+    return source_datas
 
 def deletes():
     all_ids = sec.Security.getall()

@@ -4,11 +4,16 @@ securities
 
 
 """
+
+import os
+import logging
+
 from redis import StrictRedis
 from rediscluster import StrictRedisCluster
-import logging
 from multiprocessing import Process, Queue
 import msgpack
+import psutil
+#from guppy import hpy
 
 # Modify this to get best perfomance when it comes to big data store and update, according to your machine
 # multiply the number of socket, cores and threads. i.e.for devpmapp3 the number should be 4*1*1=4
@@ -24,8 +29,8 @@ STARTUP_NODES = [{"host":"10.155.44.115","port":"6380"},
                  {"host":"10.155.44.114","port":"6381"},
                  ]
 
-#my_redis = STARTUP_NODES
-my_redis = REDIS_ZJ
+my_redis = STARTUP_NODES
+#my_redis = REDIS_ZJ
 
 # Logging configuration
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -47,8 +52,8 @@ class Security:
 
     """
 
-    r = StrictRedis(**my_redis)
-    #r = StrictRedisCluster(startup_nodes=my_redis)
+    #r = StrictRedis(**my_redis)
+    r = StrictRedisCluster(startup_nodes=my_redis)
 
     # Record all ssm_id of data stored in redis
     stored_ssm_id = 'Security_V2_stored_ssm_id'
@@ -113,28 +118,29 @@ class Security:
         if len(sec_datas)==0:
             return None # Can't return a empty list, which means all data stored successfully
 
-        if len(sec_datas)<1000: # IF the data not too big, use one pipeline to store in redis
+        if len(sec_datas)<10000: # IF the data not too big, use one pipeline to store in redis
             if protection:
                 sec_datas = cls._pre_processing(sec_datas)
             return cls._small_store(sec_datas)
 
         else:# If the data is big, use multi process to store in redis
-            if protection:
-                sec_datas = cls._pre_processing(sec_datas)
-            import gc
-            collected = gc.collect()
-            print 'garbage collected: ',collected
-
-            import psutil
-            import os
-            info = psutil.virtual_memory()
+            print 'before protection'
             print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
-            print u'total mem:',info.total
-            print u'percent:',info.percent
-            print u'cpu number:',psutil.cpu_count()
+            #import pdb
+            #pdb.set_trace()
+            if protection:
+                sec_data = cls._pre_processing(sec_datas)
+            del sec_datas
+            #import gc
+            #print gc.collect()
+            print 'after protection'
+            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
 
-            print len(sec_datas)
-            return cls._multiprocess_store(sec_datas)
+            result = cls._multiprocess_store(sec_data)
+
+            print 'after multiprocess'
+            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+            return result
 
     @classmethod
     def gets(cls, ssm_ids):
@@ -240,14 +246,8 @@ class Security:
         """
 
         def pipeline_store(i,q):
-
-            import psutil
-            import os
-            info = psutil.virtual_memory()
+            print os.getpid(),' process enter use: '
             print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
-            print u'total mem:',info.total
-            print u'percent:',info.percent
-            print u'cpu number:',psutil.cpu_count()
 
             pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
             slices = len(sec_datas)/groups
@@ -277,6 +277,9 @@ class Security:
                 print 'multi process pipeline error, please check in log'
                 logging.error('pipe error!')
                 logging.error(e)
+
+            print os.getpid,' process finish use: '
+            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
 
         groups = CPU_CORES
         failed_ids = []
