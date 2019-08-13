@@ -20,6 +20,9 @@ def test_case():
     length = len(source_data)
     if length<100000:
         #sec.Security.store(source_data, protection=False)  #protection=False can make it more fast!!!
+        #protection=True means pre-processing will impliemented to protect old data
+        #protection=False means data will be stored into redis without a pre-processing,
+        #because all the 200 attributes have new value, we don't need to protect old data in this case ,so use protection=False can be faster
         sec.Security.store(source_data)
     else:
         # store 500K data in one time may cause memory allocate error,
@@ -28,9 +31,6 @@ def test_case():
         splits = length/group
         for i in range(group):
             sec.Security.store(source_data[i*splits:(i+1)*splits])
-    #protection=True means pre-processing will impliemented to protect old data
-    #protection=False means data will be stored into redis without a pre-processing,
-    #because all the 200 attributes have new value, we don't need to protect old data in this case ,so use protection=False can be faster
     time2 = datetime.now()
     print 'store finished, use: ',time2-time1
 
@@ -51,7 +51,7 @@ def test_case():
     all_ids = sec.Security.getall()
     time1 = datetime.now()
     print 'gets begins: ',time1.time()
-    #sec_datas = sec.Security.gets(all_ids[:5000])
+    sec_datas = sec.Security.gets(all_ids[:50000])
     #print sec_datas[0]
     time2 = datetime.now()
     print 'gets finished, use: ',time2-time1
@@ -66,29 +66,29 @@ def test_update():
     check these attributes, excepted result should be:
     {'ssm_id':'singleV2_test1', 'a':8.23, 'c':1.19, 'jw':1.23, 'b':1.23}
     """
-    sec_data1 = {'ssm_id':"singleV2_test2", 'a':9.32, 'b':1.23}
-    sec_data2 = {'ssm_id':'singleV2_test2', 'a':8.23, 'c':1.19, 'jw':1.23}
-    sec_data3 = {'ssm_id':'singleV2_test2', 'c':9.99}
-
+    sec_data1 = {'ssm_id':"test_V2_singleV2_test2", 'a':9.32, 'b':1.23}
+    sec_data2 = {'ssm_id':'test_V2_singleV2_test2', 'a':8.23, 'c':1.19, 'jw':1.23}
+    sec_data3 = {'ssm_id':'test_V2_singleV2_test2', 'c':9.99}
     failed_list = sec.Security.store(sec_data1)
     if not failed_list:
-        print sec.Security.gets('singleV2_test2')
+        print 'store success!'
+        print sec.Security.gets('test_V2_singleV2_test2')
     else:
         print 'store failed!'
 
     sec.Security.store(sec_data2)
-    print sec.Security.gets('singleV2_test2')
+    print sec.Security.gets('test_V2_singleV2_test2')
 
     sec.Security.store(sec_data3)
-    print sec.Security.gets('singleV2_test2')
+    print sec.Security.gets('test_V2_singleV2_test2')
 
-    sec_datas = [{'ssm_id':'V2batch8286R7', 'a1':7.42, 'b2':8.23, 'pimco':1.33},{'ssm_id':'V2batch2X6R7', 'c1':7.42, 'b2':8.23}]
+    sec_datas = [{'ssm_id':'test_V2_batch8286R7', 'a1':7.42, 'b2':8.23, 'pimco':1.33},{'ssm_id':'test_V2_batch2X6R7', 'c1':7.42, 'b2':8.23}]
     failed_list = sec.Security.store(sec_datas)
-    secs = sec.Security.gets(['V2batch8286R7', 'V2batch2X6R7', 'notexsitid'])
+    secs = sec.Security.gets(['test_V2_batch8286R7', 'test_V2_batch2X6R7', 'notexsitid'])
     print secs
-    sec_datas = [{'ssm_id':'V2batch8286R7', 'a1':1.2, 'jw':2.33},{'ssm_id':'V2batch2X6R7', 'c1':7.42, 'b5':2.23}]
+    sec_datas = [{'ssm_id':'test_V2_batch8286R7', 'a1':1.2, 'jw':2.33},{'ssm_id':'test_V2_batch2X6R7', 'c1':7.42, 'b5':2.23}]
     failed_list = sec.Security.store(sec_datas)
-    secs = sec.Security.gets(['V2batch8286R7', 'V2batch2X6R7', 'notexsitid'])
+    secs = sec.Security.gets(['test_V2_batch8286R7', 'test_V2_batch2X6R7', 'notexsitid'])
     print secs
 
 def pandas_generate_big_data():
@@ -116,7 +116,7 @@ def deletes():
 if __name__ == '__main__':
     try:
         test_case()
-        #test_update()
+        test_update()
         #deletes()
 
     except Exception as e:

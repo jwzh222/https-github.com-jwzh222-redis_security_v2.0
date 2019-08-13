@@ -98,10 +98,12 @@ class Security:
         # For single data store, allow store({})
         if type(sec_datas)==dict :
             try:
-                sec_datas = cls._pre_processing([sec_datas])[0]
-                dumps = cls._serialize(sec_datas)
-                cls.r.set(sec_datas['ssm_id'], dumps)
-                cls.r.sadd(cls.stored_ssm_id, sec_datas['ssm_id'])
+                #sec_datas = cls._pre_processing([sec_datas])[0]
+                sec_datas = [sec_datas]
+                cls._pre_processing(sec_datas)
+                dumps = cls._serialize(sec_datas[0])
+                cls.r.set(sec_datas[0]['ssm_id'], dumps)
+                cls.r.sadd(cls.stored_ssm_id, sec_datas[0]['ssm_id'])
             except Exception as e:
                 logging.error('Security.store() error:')
                 logging.error(e)
