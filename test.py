@@ -21,7 +21,9 @@ def test_case():
     if length<100000:
         #sec.Security.store(source_data, protection=False)  #protection=False can make it more fast!!!
         sec.Security.store(source_data)
-    else:# store huge data may cause memory allocate error, split data into some group can avoid memory allocate error
+    else:
+        # store 500K data in one time may cause memory allocate error,
+        # split data into some group can avoid memory allocate error
         group = 5
         splits = length/group
         for i in range(group):
