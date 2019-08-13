@@ -5,15 +5,12 @@ securities
 
 """
 
-import os
 import logging
 
 from redis import StrictRedis
 from rediscluster import StrictRedisCluster
 from multiprocessing import Process, Queue
 import msgpack
-import psutil
-#from guppy import hpy
 
 # Modify this to get best perfomance when it comes to big data store and update, according to your machine
 # multiply the number of socket, cores and threads. i.e.for devpmapp3 the number should be 4*1*1=4
@@ -73,14 +70,10 @@ class Security:
     def _pre_processing(cls, sec_datas):
         ids = [sec_data['ssm_id'] for sec_data in sec_datas]
         olds = cls.gets(ids)
-        after_processing = []
-        for new_data,old_data in zip(sec_datas,olds):
-            if old_data:# if not None
-                old_data.update(new_data)
-                after_processing.append(old_data)
-            else:
-                after_processing.append(new_data)
-        return after_processing
+        for i in range(len(sec_datas)):
+            if olds[i]:
+                olds[i].update(sec_datas[i])
+                sec_datas[i] = olds[i]
 
     @classmethod
     def store(cls, sec_datas, protection=True):
@@ -120,27 +113,17 @@ class Security:
 
         if len(sec_datas)<10000: # IF the data not too big, use one pipeline to store in redis
             if protection:
-                sec_datas = cls._pre_processing(sec_datas)
+                cls._pre_processing(sec_datas)
             return cls._small_store(sec_datas)
 
         else:# If the data is big, use multi process to store in redis
-            print 'before protection'
-            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
             #import pdb
             #pdb.set_trace()
-            if protection:
-                sec_data = cls._pre_processing(sec_datas)
-            del sec_datas
-            #import gc
-            #print gc.collect()
-            print 'after protection'
-            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
+            if protection:# Protect old attributes
+                cls._pre_processing(sec_datas)
 
-            result = cls._multiprocess_store(sec_data)
+            return cls._multiprocess_store(sec_datas)
 
-            print 'after multiprocess'
-            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
-            return result
 
     @classmethod
     def gets(cls, ssm_ids):
@@ -246,8 +229,6 @@ class Security:
         """
 
         def pipeline_store(i,q):
-            print os.getpid(),' process enter use: '
-            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
 
             pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
             slices = len(sec_datas)/groups
@@ -277,9 +258,6 @@ class Security:
                 print 'multi process pipeline error, please check in log'
                 logging.error('pipe error!')
                 logging.error(e)
-
-            print os.getpid,' process finish use: '
-            print u'mem use:',psutil.Process(os.getpid()).memory_info().rss
 
         groups = CPU_CORES
         failed_ids = []

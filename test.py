@@ -17,8 +17,15 @@ def test_case():
     #In the moring, Li Lei want to store all these 500K*200 data into redis
     time1 = datetime.now()
     print 'store begins: ',time1.time()
-    sec.Security.store(source_data, protection=False)
-    #sec.Security.store(source_data)
+    length = len(source_data)
+    if length<100000:
+        #sec.Security.store(source_data, protection=False)  #protection=False can make it more fast!!!
+        sec.Security.store(source_data)
+    else:# store huge data may cause memory allocate error, split data into some group can avoid memory allocate error
+        group = 5
+        splits = length/group
+        for i in range(group):
+            sec.Security.store(source_data[i*splits:(i+1)*splits])
     #protection=True means pre-processing will impliemented to protect old data
     #protection=False means data will be stored into redis without a pre-processing,
     #because all the 200 attributes have new value, we don't need to protect old data in this case ,so use protection=False can be faster
@@ -42,7 +49,7 @@ def test_case():
     all_ids = sec.Security.getall()
     time1 = datetime.now()
     print 'gets begins: ',time1.time()
-    #sec_datas = sec.Security.gets(all_ids[:50000])
+    #sec_datas = sec.Security.gets(all_ids[:5000])
     #print sec_datas[0]
     time2 = datetime.now()
     print 'gets finished, use: ',time2-time1
@@ -100,6 +107,8 @@ def pandas_generate_big_data():
 def deletes():
     all_ids = sec.Security.getall()
     sec.Security.deletes(all_ids)
+
+
 
 
 if __name__ == '__main__':
