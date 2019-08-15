@@ -18,7 +18,7 @@ def test_case():
     time1 = datetime.now()
     print 'store begins: ',time1.time()
     length = len(source_data)
-    if length<100000:
+    if length<200000:
         #sec.Security.store(source_data, protection=False)  #protection=False can make it more fast!!!
         #protection=True means pre-processing will impliemented to protect old data
         #protection=False means data will be stored into redis without a pre-processing,
@@ -37,14 +37,14 @@ def test_case():
     #Test case 2:
     #Li lei want to update one attribute for one security, and dont want to affect other attributes
     checkpoint_ssm_id = 'test_V2_ssm_id9'
-    sec_data1 = {'ssm_id':checkpoint_ssm_id, 'a1':9.99, 'z99':3.3}
-    #print 'checkpoint before update :',sec.Security.gets(checkpoint_ssm_id)
+    sec_data1 = {'ssm_id':checkpoint_ssm_id, 'a1':9.99, 'z99':4.3}
+    print 'checkpoint before update :',sec.Security.gets(checkpoint_ssm_id)
     #you don't want to lose other attributes in this case, don't use protection=False
     sec.Security.store(sec_data1)
     print '-----------------------------------------------------------'
     #sec.Security.store(sec_data1,protection=True)  is also OK
     #sec.Security.store(sec_data1,protection=False) is WRONG, this will overwrite other attributes
-    #print 'checkpoint after update :',sec.Security.gets(checkpoint_ssm_id)
+    print 'checkpoint after update :',sec.Security.gets(checkpoint_ssm_id)
 
     #Test case 3:
     #get a list of data from redis
@@ -101,7 +101,6 @@ def pandas_generate_big_data():
     print 'the test data: ',sec_pd
     print 'transforming source data, please wait...'
     source_datas = zj_test_engine.gen_source_data(sec_pd) # returns a list of dict
-    del sec_pd
     print 'test engine has generated ',len(source_datas),' number of source data',\
         ' with ',_COLUMNS,' attributes!'
     return source_datas
