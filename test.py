@@ -28,7 +28,7 @@ def test_case():
         # store 500K data in one time may cause memory allocate error,
         # split data into some group can avoid memory allocate error
         group = 5
-        splits = length/group
+        splits = length/group+1
         for i in range(group):
             sec.Security.store(source_data[i*splits:(i+1)*splits])
     time2 = datetime.now()
