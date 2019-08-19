@@ -111,7 +111,7 @@ if length<200000:
       sec.Security.store(source_data)
   else:
       group = 5
-      splits = length/group
+      splits = length/group+1
       for i in range(group):
           sec.Security.store(source_data[i*splits:(i+1)*splits])
           
