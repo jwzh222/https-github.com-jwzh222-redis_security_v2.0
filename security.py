@@ -230,7 +230,7 @@ class Security:
         def pipeline_store(i,q):
 
             pipe = cls.r.pipeline(transaction=False)# transaction=False turn off atomic
-            slices = len(sec_datas)/groups
+            slices = len(sec_datas)//groups+1
             data_slice = sec_datas[i*slices:(i+1)*slices]# split the datas into groups
 
             if protection==True:# protect old attributes
